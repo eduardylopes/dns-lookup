@@ -12,27 +12,35 @@ import (
 func Generate() *cli.App {
 	app := cli.NewApp()
 
-	app.Name = "Command Line Application"
-	app.Usage = "Search for public IP addresses based on the dns"
+	app.Name = "DNS Lookup"
+	app.Usage = "Search for public IP addresses based on the host domain name"
+
+	flags := []cli.Flag{
+		cli.StringFlag{
+			Name:  "host",
+			Value: "github.com",
+		},
+	}
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "ip",
-			Usage: "Search for public IP in the internet",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "host",
-					Value: "github.com",
-				},
-			},
-			Action: searchIps,
+			Name:   "ip",
+			Usage:  "Retrieve the IP addresses from the host",
+			Flags:  flags,
+			Action: getHostIp,
+		},
+		{
+			Name:   "ns",
+			Usage:  "Retrieve the DNS from the host",
+			Flags:  flags,
+			Action: getHostDNS,
 		},
 	}
 
 	return app
 }
 
-func searchIps(c *cli.Context) {
+func getHostIp(c *cli.Context) {
 	host := c.String("host")
 
 	ips, error := net.LookupIP(host)
@@ -40,7 +48,22 @@ func searchIps(c *cli.Context) {
 	if error != nil {
 		log.Fatal(error)
 	}
+
 	for _, ip := range ips {
 		fmt.Println(ip)
+	}
+}
+
+func getHostDNS(c *cli.Context) {
+	host := c.String("host")
+
+	servers, error := net.LookupNS(host)
+
+	if error != nil {
+		log.Fatal(error)
+	}
+
+	for _, server := range servers {
+		fmt.Println(server.Host)
 	}
 }
